@@ -20,14 +20,13 @@ public class CSVWriter {
     private static Logger logger = Logger.getLogger(CSVWriter.class);
 
     public static void main(String[] args) throws IOException, SAXException {
-        XMLDumpParser parser = new XMLDumpParser(
-                "/Users/luca/Downloads/enwiki-20140502-pages-meta-current1.xml.bz2");
+        logger.info("Parsing file: "+args[0]);
+        logger.info("Writing csv to: "+args[1]);
+        XMLDumpParser parser = new XMLDumpParser(args[0]);
 
         final au.com.bytecode.opencsv.CSVWriter writer =
                 new au.com.bytecode.opencsv.CSVWriter(
-                        new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream( new FileOutputStream( new File( "/tmp/test.csv.gz" ) ), 10 * 1024), "UTF-8")));
-
-
+                        new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream( new FileOutputStream( new File( args[1] ) ), 10 * 1024), "UTF-8")));
         try {
             parser.getContentHandler().setPageCallback(new PageCallback() {
                 @Override
@@ -42,8 +41,10 @@ public class CSVWriter {
                 }
             });
 
+            logger.info("Starting parser");
             parser.parse();
         } finally {
+            logger.info("Closing parser");
             writer.flush();
             writer.close();
         }

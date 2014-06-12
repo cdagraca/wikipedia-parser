@@ -14,7 +14,6 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
-import net.contrapunctus.lzma.LzmaInputStream;
 import org.apache.commons.compress.bzip2.CBZip2InputStream;
 import org.apache.xerces.parsers.SAXParser;
 import org.xml.sax.InputSource;
@@ -80,11 +79,6 @@ public class XMLDumpParser {
             byte[] ignoreBytes = new byte[2];
             fis.read(ignoreBytes); //"B", "Z" bytes from commandline tools
             is = new CBZip2InputStream(fis);
-        } else if (dumpFile.endsWith(".7z")) {
-            //FIXME: Doesn't seem to work.
-            byte[] ignoreBytes = new byte[2];
-            fis.read(ignoreBytes); //"7", "z" bytes from commandline tools
-            is = new LzmaInputStream(fis);
         } else {
             is = fis;
         }
