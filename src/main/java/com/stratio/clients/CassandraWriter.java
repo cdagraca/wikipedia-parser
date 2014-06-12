@@ -32,7 +32,7 @@ public class CassandraWriter implements Closeable {
     private BatchStatement batchStatement = new BatchStatement();
     private int numStatement = 0;
     private int numIteration = 0;
-    private static final int NUM_BATCH_STATEMENT = 100;
+    private static final int NUM_BATCH_STATEMENT = 10;
     private Cluster cluster;
 
     public CassandraWriter(String host, Integer port, String keyspace) {
