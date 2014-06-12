@@ -26,7 +26,7 @@ public class CassandraWriter implements Closeable {
                     "page_isredirect boolean, "
                     + "contributor_id int, contributor_username text, contributor_isanonymous boolean, " +
                     "revision_isminor boolean, "
-                    + "revision_tokens list<text>, revision_lower_tokens list<text>, revision_redirection text, revision_text text, " +
+                    + "revision_tokens list<text>, revision_lower_tokens list<text>, revision_redirection text, revision_text text, lucene text," +
                     "primary key (id));";
 
     private Session session;
