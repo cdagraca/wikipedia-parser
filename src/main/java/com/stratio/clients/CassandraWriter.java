@@ -12,6 +12,7 @@ import org.xml.sax.SAXException;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.UUID;
 
 /**
  * Created by luca on 12/06/14.
@@ -20,19 +21,19 @@ public class CassandraWriter implements Closeable {
     private static Logger logger = Logger.getLogger(CassandraWriter.class);
 
     private static final String CREATE_TABLE_IF_EXIST =
-            "CREATE TABLE IF NOT EXISTS revision (revision_id int, revision_timestamp timestamp, "
+            "CREATE TABLE IF NOT EXISTS revision (id uuid, revision_id int, revision_timestamp timestamp, "
                     + "page_id int, page_ns text, page_fulltitle text, page_title text, page_restrictions text, " +
                     "page_isredirect boolean, "
                     + "contributor_id int, contributor_username text, contributor_isanonymous boolean, " +
                     "revision_isminor boolean, "
                     + "revision_tokens list<text>, revision_lower_tokens list<text>, revision_redirection text, revision_text text, " +
-                    "primary key (page_id, revision_id));";
+                    "primary key (id));";
 
     private Session session;
     private BatchStatement batchStatement = new BatchStatement();
     private int numStatement = 0;
     private int numIteration = 0;
-    private static final int NUM_BATCH_STATEMENT = 10;
+    private static final int NUM_BATCH_STATEMENT = 100;
     private Cluster cluster;
 
     public CassandraWriter(String host, Integer port, String keyspace) {
@@ -46,13 +47,13 @@ public class CassandraWriter implements Closeable {
         Statement query =
                 QueryBuilder.insertInto("revision")
                         .values(
-                                new String[]{"revision_id", "revision_timestamp",
+                                new String[]{"id", "revision_id", "revision_timestamp",
                                         "page_id", "page_ns", "page_fulltitle", "page_title",
                                         "page_restrictions",
                                         "page_isredirect", "contributor_id", "contributor_username",
                                         "contributor_isanonymous", "revision_isminor",
                                         "revision_tokens", "revision_lower_tokens", "revision_redirection", "revision_text"},
-                                new Object[]{r.getId(),
+                                new Object[]{UUID.fromString(new com.eaio.uuid.UUID().toString()), r.getId(),
                                         r.getTimestamp(),
                                         r.getPage().getId(), r.getPage().getNamespace(),
                                         r.getPage().getFullTitle(), r.getPage().getTitle(),
@@ -66,7 +67,7 @@ public class CassandraWriter implements Closeable {
         batchStatement.add(query);
         numStatement++;
         if (numStatement == NUM_BATCH_STATEMENT) {
-            logger.info("Execute batch query PersonRegister: " + numIteration++);
+            logger.info("Execute batch query CassandraWriter: " + numIteration++);
             session.execute(batchStatement);
             batchStatement.clear();
             numStatement = 0;
