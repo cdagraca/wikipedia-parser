@@ -20,12 +20,12 @@ public class CassandraWriter implements Closeable {
     private static Logger logger = Logger.getLogger(CassandraWriter.class);
 
     private static final String CREATE_TABLE_IF_EXIST =
-            "CREATE TABLE IF NOT EXISTS revision (revision_id int, "
+            "CREATE TABLE IF NOT EXISTS revision (revision_id int, revision_timestamp timestamp, "
                     + "page_id int, page_ns text, page_fulltitle text, page_title text, page_restrictions text, " +
                     "page_isredirect boolean, "
                     + "contributor_id int, contributor_username text, contributor_isanonymous boolean, " +
-                    "isminor boolean, "
-                    + "tokens list<text>, lower_tokens list<text>, redirection text, revision_text text, " +
+                    "revision_isminor boolean, "
+                    + "revision_tokens list<text>, revision_lower_tokens list<text>, revision_redirection text, revision_text text, " +
                     "primary key (page_id, revision_id));";
 
     private Session session;
@@ -46,12 +46,15 @@ public class CassandraWriter implements Closeable {
         Statement query =
                 QueryBuilder.insertInto("revision")
                         .values(
-                                new String[]{"revision_id", "page_id", "page_ns", "page_fulltitle", "page_title",
+                                new String[]{"revision_id", "revision_timestamp",
+                                        "page_id", "page_ns", "page_fulltitle", "page_title",
                                         "page_restrictions",
                                         "page_isredirect", "contributor_id", "contributor_username",
-                                        "contributor_isanonymous", "isminor",
-                                        "tokens", "lower_tokens", "redirection", "revision_text"},
-                                new Object[]{r.getId(), r.getPage().getId(), r.getPage().getNamespace(),
+                                        "contributor_isanonymous", "revision_isminor",
+                                        "revision_tokens", "revision_lower_tokens", "revision_redirection", "revision_text"},
+                                new Object[]{r.getId(),
+                                        r.getTimestamp(),
+                                        r.getPage().getId(), r.getPage().getNamespace(),
                                         r.getPage().getFullTitle(), r.getPage().getTitle(),
                                         r.getPage().getRestrictions(),
                                         r.getPage().isRedirect(), r.getContributor().getId(),

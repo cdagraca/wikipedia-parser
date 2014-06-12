@@ -7,6 +7,8 @@ package com.stratio.data;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultiset;
+
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import com.stratio.parsers.MediawikiTokenizer;
@@ -14,6 +16,12 @@ import com.stratio.parsers.MediawikiTokenizer;
 public class Revision {
 
     private Integer id;
+    private Date timestamp;
+
+    public Date getTimestamp() {
+        return timestamp;
+    }
+
     private Contributor contributor;
     private Boolean isMinor;
     private Page page;
@@ -23,15 +31,16 @@ public class Revision {
     private String redirection;
 
     public Revision(int id, String text) {
-        this(id, text, null, false, null);
+        this(id, null, text, null, false, null);
     }
 
     public Revision(int id, String text, Contributor contributor) {
-        this(id, text, contributor, false, null);
+        this(id, null, text, contributor, false, null);
     }
 
-    public Revision(int id, String text, Contributor contributor, boolean isMinor, Page page) {
+    public Revision(int id, Date timestamp,  String text, Contributor contributor, boolean isMinor, Page page) {
         this.id = id;
+        this.timestamp = timestamp;
         this.text = checkNotNull(text);
         this.contributor = contributor;
         this.isMinor = isMinor;

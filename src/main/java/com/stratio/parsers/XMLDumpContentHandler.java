@@ -5,8 +5,15 @@ package com.stratio.parsers;
 
 import static com.google.common.collect.Maps.*;
 import com.google.common.collect.ImmutableList;
+
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
+
 import org.xml.sax.Attributes;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.SAXException;
@@ -39,7 +46,7 @@ public class XMLDumpContentHandler extends DefaultHandler {
     private String curRestrictions;
     private String curUsername;
     private String curTitle;
-    private String curTimestamp;
+    private Date curTimestamp;
     private String curComment;
     private String curText;
     private Boolean curRedirect;
@@ -50,6 +57,10 @@ public class XMLDumpContentHandler extends DefaultHandler {
     private RevisionCallback revisionCallback;
     private ImmutableList<String> allowedNamespaces;
     private Site site;
+
+    //2014-04-27T06:00:47Z, ISO-8601 date
+    private static final SimpleDateFormat sdf =
+            new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
     public PageCallback getPageCallback() {
         return pageCallback;
@@ -78,6 +89,8 @@ public class XMLDumpContentHandler extends DefaultHandler {
     }
 
     public XMLDumpContentHandler(List<String> allowedNamespaces) {
+        TimeZone tz = TimeZone.getTimeZone("UTC");
+        sdf.setTimeZone(tz);
         this.pageCallback = new VoidPageCallback();
         this.revisionCallback = new VoidRevisionCallback();
         if (allowedNamespaces == null) {
@@ -254,13 +267,18 @@ public class XMLDumpContentHandler extends DefaultHandler {
             case IN_REVISION:
                 if ("revision".equals(localname)) {
                     state = State.IN_PAGE;
-                    revisionCallback.callback(new Revision(curRevisionId,
+                    revisionCallback.callback(new Revision(curRevisionId,curTimestamp,
                             curText, new Contributor(curContributorId,
                             curUsername, curIsAnonymous), curIsMinor, curPage));
                 } else if ("id".equals(localname)) {
                     curRevisionId = Integer.parseInt(_sb.toString());
                 } else if ("timestamp".equals(localname)) {
-                    curTimestamp = _sb.toString();
+                    if (!"".equals(_sb.toString()))
+                        try {
+                            curTimestamp = sdf.parse(_sb.toString());
+                        } catch (ParseException e) {
+                            e.printStackTrace();
+                        }
                 } else if ("comment".equals(localname)) {
                     curComment = _sb.toString();
                 } else if ("text".equals(localname)) {
