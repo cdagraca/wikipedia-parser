@@ -2,6 +2,7 @@ package com.stratio.clients;
 
 import com.datastax.driver.core.*;
 import com.datastax.driver.core.querybuilder.QueryBuilder;
+import com.google.common.util.concurrent.RateLimiter;
 import com.stratio.callbacks.PageCallback;
 import com.stratio.callbacks.RevisionCallback;
 import com.stratio.data.Page;
@@ -36,10 +37,15 @@ public class CassandraWriter implements Closeable {
     private static final int NUM_BATCH_STATEMENT = 100;
     private Cluster cluster;
 
+    private final double RATE = 2.0;
+
+    private RateLimiter rateLimiter;
+
     public CassandraWriter(String host, Integer port, String keyspace) {
-        cluster = Cluster.builder().addContactPoint(host).build();
+        cluster = Cluster.builder().addContactPoint(host).withPort(port).build();
         session = cluster.connect(keyspace);
         session.execute(CREATE_TABLE_IF_EXIST);
+        rateLimiter = RateLimiter.create(RATE);
     }
 
     public void write(Revision r) {
@@ -67,15 +73,11 @@ public class CassandraWriter implements Closeable {
         batchStatement.add(query);
         numStatement++;
         if (numStatement == NUM_BATCH_STATEMENT) {
+            rateLimiter.acquire();
             logger.info("Execute batch query CassandraWriter: " + numIteration++);
             session.execute(batchStatement);
             batchStatement.clear();
             numStatement = 0;
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                logger.error(e);
-            }
         }
 
     }
