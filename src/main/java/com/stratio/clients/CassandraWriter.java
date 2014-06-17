@@ -37,7 +37,7 @@ public class CassandraWriter implements Closeable {
     private static final int NUM_BATCH_STATEMENT = 100;
     private Cluster cluster;
 
-    private final double RATE = 2.0;
+    private final double RATE = 5.0;
 
     private RateLimiter rateLimiter;
 
@@ -50,25 +50,32 @@ public class CassandraWriter implements Closeable {
 
     public void write(Revision r) {
 
-        Statement query =
-                QueryBuilder.insertInto("revision")
-                        .values(
-                                new String[]{"id", "revision_id", "revision_timestamp",
-                                        "page_id", "page_ns", "page_fulltitle", "page_title",
-                                        "page_restrictions",
-                                        "page_isredirect", "contributor_id", "contributor_username",
-                                        "contributor_isanonymous", "revision_isminor",
-                                        "revision_tokens", "revision_lower_tokens", "revision_redirection", "revision_text"},
-                                new Object[]{UUID.fromString(new com.eaio.uuid.UUID().toString()), r.getId(),
-                                        r.getTimestamp(),
-                                        r.getPage().getId(), r.getPage().getNamespace(),
-                                        r.getPage().getFullTitle(), r.getPage().getTitle(),
-                                        r.getPage().getRestrictions(),
-                                        r.getPage().isRedirect(), r.getContributor().getId(),
-                                        r.getContributor().getUsername(),
-                                        r.getContributor().getIsAnonymous(), r.isMinor(), r.getTokens(),
-                                        r.getLowerTokens(), r.getRedirection(), r.getText()})
-                        .setConsistencyLevel(ConsistencyLevel.QUORUM);
+        Statement query = null;
+        try {
+            query = QueryBuilder.insertInto("revision")
+                    .values(
+                            new String[]{"id", "revision_id", "revision_timestamp",
+                                    "page_id", "page_ns", "page_fulltitle", "page_title",
+                                    "page_restrictions",
+                                    "page_isredirect", "contributor_id", "contributor_username",
+                                    "contributor_isanonymous", "revision_isminor",
+                                    "revision_tokens", "revision_lower_tokens", "revision_redirection",
+                                    "revision_text"},
+                            new Object[]{UUID.fromString(new com.eaio.uuid.UUID().toString()), r.getId(),
+                                    r.getTimestamp(),
+                                    r.getPage().getId(), r.getPage().getNamespace(),
+                                    r.getPage().getFullTitle(), r.getPage().getTitle(),
+                                    r.getPage().getRestrictions(),
+                                    r.getPage().isRedirect(), r.getContributor().getId(),
+                                    r.getContributor().getUsername(),
+                                    r.getContributor().getIsAnonymous(), r.isMinor(), r.getTokens(),
+                                    r.getLowerTokens(), r.getRedirection(), r.getText()})
+                    .setConsistencyLevel(ConsistencyLevel.QUORUM);
+        } catch (Exception e) {
+            logger.error("Cannot parse revision with revision_id: " + r.getId(), e);
+
+            return;
+        }
 
         batchStatement.add(query);
         numStatement++;
@@ -89,7 +96,7 @@ public class CassandraWriter implements Closeable {
 
     public static void main(String[] args) throws IOException, SAXException {
         if (args.length != 4) {
-            logger.warn("Usage: <input_file> <keyspace> <cassandra_endpoint> <cassandra_port>");
+            logger.warn("Usage: <input_file> <keyspace> <cassandra_endpoint> <cassandra_port> <skip_first_n>");
 
             System.exit(1);
         }
@@ -100,6 +107,9 @@ public class CassandraWriter implements Closeable {
         final String keyspace = args[1];
         final String host = args[2];
         final Integer port = Integer.parseInt(args[3]);
+        final Integer skipFirstN = Integer.parseInt(args[4]);
+
+        logger.info("Skipping first "+skipFirstN+" revisions");
 
         try (final CassandraWriter writer = new CassandraWriter(host, port, keyspace)){
             parser.getContentHandler().setPageCallback(new PageCallback() {
@@ -109,9 +119,20 @@ public class CassandraWriter implements Closeable {
                 }
             });
             parser.getContentHandler().setRevisionCallback(new RevisionCallback() {
+                private int revCounter = 0;
+                private boolean started = false;
+                
                 @Override
                 public void callback(Revision revision) {
-                    writer.write(revision);
+                    revCounter++;
+                    if (revCounter > skipFirstN){
+
+                        if (!started){
+                            logger.info("Skip finished. Start writing");
+                        }
+                        started = true;
+                        writer.write(revision);
+                    }
                 }
             });
 
