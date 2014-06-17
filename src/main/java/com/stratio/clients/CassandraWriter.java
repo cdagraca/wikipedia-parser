@@ -95,7 +95,7 @@ public class CassandraWriter implements Closeable {
     }
 
     public static void main(String[] args) throws IOException, SAXException {
-        if (args.length != 4) {
+        if (args.length != 5) {
             logger.warn("Usage: <input_file> <keyspace> <cassandra_endpoint> <cassandra_port> <skip_first_n>");
 
             System.exit(1);
@@ -121,7 +121,7 @@ public class CassandraWriter implements Closeable {
             parser.getContentHandler().setRevisionCallback(new RevisionCallback() {
                 private int revCounter = 0;
                 private boolean started = false;
-                
+
                 @Override
                 public void callback(Revision revision) {
                     revCounter++;
