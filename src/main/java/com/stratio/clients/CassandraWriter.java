@@ -82,7 +82,11 @@ public class CassandraWriter implements Closeable {
         if (numStatement == NUM_BATCH_STATEMENT) {
             rateLimiter.acquire();
             logger.info("Execute batch query CassandraWriter: " + numIteration++);
-            session.execute(batchStatement);
+            try {
+                session.execute(batchStatement);
+            } catch (Exception e) {
+                logger.error("Error while executing batch",e);
+            }
             batchStatement.clear();
             numStatement = 0;
         }
