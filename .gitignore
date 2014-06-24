@@ -1,2 +1,11 @@
 *.iml
 .idea/
+
+# Eclipse
+.classpath
+.project
+.metadata
+.settings/
+local.properties
+
+target/
