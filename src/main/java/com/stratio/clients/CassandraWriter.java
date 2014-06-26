@@ -63,7 +63,7 @@ public class CassandraWriter implements Closeable {
         try {
             query = addField(QueryBuilder.insertInto("revision"),
                     "id", UUID.fromString(new com.eaio.uuid.UUID().toString()));
-            
+
             query = addField(query, "revision_id", r.getId());
             query = addField(query, "revision_timestamp", r.getTimestamp());
             query = addField(query, "page_id", r.getPage().getId());
@@ -89,9 +89,10 @@ public class CassandraWriter implements Closeable {
         numStatement++;
         if (numStatement == NUM_BATCH_STATEMENT) {
             rateLimiter.acquire();
-            logger.info("Execute batch query CassandraWriter: " + numIteration++);
             try {
                 session.execute(batchStatement);
+                logger.info("Executed batch query CassandraWriter: " + numIteration++);
+
             } catch (Exception e) {
                 logger.error("Error while executing batch",e);
             }

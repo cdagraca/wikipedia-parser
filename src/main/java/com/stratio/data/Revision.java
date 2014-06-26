@@ -26,8 +26,8 @@ public class Revision {
     private Boolean isMinor;
     private Page page;
     private String text;
-    private ImmutableList<String> tokens;
-    private ImmutableList<String> lowerTokens;
+    private ImmutableList<String> tokens = ImmutableList.of();
+    private ImmutableList<String> lowerTokens = ImmutableList.of();
     private String redirection;
 
     public Revision(int id, String text) {
@@ -68,20 +68,21 @@ public class Revision {
     }
 
     public ImmutableList<String> getTokens() {
+        /*
         if (tokens == null) {
             tokens = ImmutableList.copyOf(MediawikiTokenizer.getTokens(text));
-        }
+        }*/
         return tokens;
     }
 
     public ImmutableList<String> getLowerTokens() {
-        if (lowerTokens == null) {
+        /*if (lowerTokens == null) {
             ImmutableList.Builder<String> builder = ImmutableList.builder();
             for (String token: getTokens()) {
                 builder.add(token.toLowerCase());
             }
             lowerTokens = builder.build();
-        }
+        }*/
         return lowerTokens;
     }
 
