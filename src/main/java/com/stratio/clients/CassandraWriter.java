@@ -138,6 +138,11 @@ public class CassandraWriter implements Closeable {
                 @Override
                 public void callback(Revision revision) {
                     revCounter++;
+
+                    if (revCounter % 100 == 0){
+                        logger.info("# parsed documents: "+ revCounter);
+                    }
+
                     if (revCounter > skipFirstN){
 
                         if (!started){

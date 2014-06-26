@@ -9,9 +9,6 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMultiset;
 
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
-import com.stratio.parsers.MediawikiTokenizer;
 
 public class Revision {
 
