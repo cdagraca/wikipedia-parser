@@ -23,13 +23,13 @@ public class CassandraWriter implements Closeable {
     private static Logger logger = Logger.getLogger(CassandraWriter.class);
 
     private static final String CREATE_TABLE_IF_EXIST =
-            "CREATE TABLE IF NOT EXISTS revision (revision_id int, revision_timestamp timestamp, "
+            "CREATE TABLE IF NOT EXISTS revision (id uuid, revision_id int, revision_timestamp timestamp, "
                     + "page_id int, page_ns text, page_fulltitle text, page_title text, page_restrictions text, " +
                     "page_isredirect boolean, "
                     + "contributor_id int, contributor_username text, contributor_isanonymous boolean, " +
                     "revision_isminor boolean, "
                     + "revision_redirection text, revision_text text, lucene text," +
-                    "primary key (revision_id));";
+                    "primary key (id));";
 
     private Session session;
     private BatchStatement batchStatement = new BatchStatement();
@@ -61,7 +61,10 @@ public class CassandraWriter implements Closeable {
 
         Insert query = null;
         try {
-            query = addField(QueryBuilder.insertInto("revision"), "revision_id", r.getId());
+            query = addField(QueryBuilder.insertInto("revision"),
+                    "id", UUID.fromString(new com.eaio.uuid.UUID().toString()));
+            
+            query = addField(query, "revision_id", r.getId());
             query = addField(query, "revision_timestamp", r.getTimestamp());
             query = addField(query, "page_id", r.getPage().getId());
             query = addField(query, "page_ns", r.getPage().getNamespace());
