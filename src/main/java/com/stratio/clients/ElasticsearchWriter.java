@@ -58,7 +58,7 @@ public class ElasticsearchWriter implements Closeable {
 		                                     .put("client.transport.sniff", true)
 		                                     .put("client.transport.nodes_sampler_interval", 60)
 		                                     .put("cluster.name", cluster)
-		                                     .build();		
+		                                     .build();
 		client = new TransportClient(settings);
 		for (String host : hosts.split(",")) {
 			client.addTransportAddress(new InetSocketTransportAddress(host, 9300));
@@ -79,20 +79,16 @@ public class ElasticsearchWriter implements Closeable {
 			                                    .endObject()
 			                                    .startObject("properties")
 			                                    .startObject("revision_id")
-			                                    .field("store", false)
 			                                    .field("type", "integer")
 			                                    .endObject()
 			                                    .startObject("revision_timestamp")
-			                                    .field("store", false)
 			                                    .field("type", "date")
 			                                    .field("format", DATE_PATTERN)
 			                                    .endObject()
 			                                    .startObject("page_id")
-			                                    .field("store", false)
 			                                    .field("type", "integer")
 			                                    .endObject()
 			                                    .startObject("page_ns")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "not_analyzed")
 			                                    .startObject("norms")
@@ -100,19 +96,16 @@ public class ElasticsearchWriter implements Closeable {
 			                                    .endObject()
 			                                    .endObject()
 			                                    .startObject("page_fulltitle")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "analyzed")
 			                                    .field("analyzer", "english")
 			                                    .endObject()
 			                                    .startObject("page_title")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "analyzed")
 			                                    .field("analyzer", "english")
 			                                    .endObject()
 			                                    .startObject("page_restrictions")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "not_analyzed")
 			                                    .startObject("norms")
@@ -120,15 +113,12 @@ public class ElasticsearchWriter implements Closeable {
 			                                    .endObject()
 			                                    .endObject()
 			                                    .startObject("page_isredirect")
-			                                    .field("store", false)
 			                                    .field("type", "boolean")
 			                                    .endObject()
 			                                    .startObject("contributor_id")
-			                                    .field("store", false)
 			                                    .field("type", "integer")
 			                                    .endObject()
 			                                    .startObject("contributor_username")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "not_analyzed")
 			                                    .startObject("norms")
@@ -136,15 +126,12 @@ public class ElasticsearchWriter implements Closeable {
 			                                    .endObject()
 			                                    .endObject()
 			                                    .startObject("contributor_isanonymous")
-			                                    .field("store", false)
 			                                    .field("type", "boolean")
 			                                    .endObject()
 			                                    .startObject("revision_isminor")
-			                                    .field("store", false)
 			                                    .field("type", "boolean")
 			                                    .endObject()
 			                                    .startObject("revision_redirection")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "not_analyzed")
 			                                    .startObject("norms")
@@ -152,7 +139,6 @@ public class ElasticsearchWriter implements Closeable {
 			                                    .endObject()
 			                                    .endObject()
 			                                    .startObject("revision_text")
-			                                    .field("store", false)
 			                                    .field("type", "string")
 			                                    .field("index", "analyzed")
 			                                    .field("analyzer", "english")
@@ -196,13 +182,13 @@ public class ElasticsearchWriter implements Closeable {
 			                                    .endObject();
 
 			IndexRequest indexRequest = client.prepareIndex(index, type).setSource(json).request();
-			String upsertKey = new com.eaio.uuid.UUID().toString();
+			String id = new com.eaio.uuid.UUID().toString();
 			UpdateRequest updateRequest = client.prepareUpdate()
 			                                    .setIndex(index)
 			                                    .setType(type)
 			                                    .setUpsert(indexRequest)
 			                                    .setSource(json)
-			                                    .setId(upsertKey)
+			                                    .setId(id)
 			                                    .setDoc(json)
 			                                    .request();
 			bulkRequest.add(updateRequest);
@@ -213,10 +199,13 @@ public class ElasticsearchWriter implements Closeable {
 			if (numStatement == batchSize) {
 				try {
 					BulkResponse bulkResponse = bulkRequest.execute().actionGet();
-					logger.info("Insertion Elasticsearch: " + bulkResponse.getTookInMillis() + "ms - " + numStatement
-					        + " - " + numDocs);
+					long bulkTime = bulkResponse.getTookInMillis();
+					logger.info(String.format("Insertion Elasticsearch: %dms - %d inserted - %d total",
+					                          bulkTime,
+					                          numStatement,
+					                          numDocs));
 				} catch (Exception e) {
-					logger.error("Error while executing batch", e);
+					logger.error("Error while executing bulk indexing", e);
 				}
 				bulkRequest = client.prepareBulk();
 				numStatement = 0;
