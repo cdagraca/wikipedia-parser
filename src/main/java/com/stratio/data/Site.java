@@ -45,7 +45,7 @@ public class Site {
 
     public String[] splitTitle(String fullTitle) {
         String namespace = namespaceStringFromFullTitle(checkNotNull(fullTitle));
-        String title = fullTitle.substring(namespace.length());
+        String title = (namespace.length() == 0) ? fullTitle : fullTitle.substring(namespace.length()+1);
         return new String[]{namespace, title};
     }
 
